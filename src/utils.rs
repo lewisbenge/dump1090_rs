@@ -40,6 +40,32 @@ pub fn read_test_data(filepath: &str) -> [Complex<i16>; 0x20000] {
 }
 
 #[must_use]
+pub fn to_mag(data: &[u8]) -> MagnitudeBuffer {
+    
+    //populate lookup table
+    let mut maglut = vec![0u16; 129 * 129];
+    for i in 0..=128 {
+        for q in 0..=128 {
+            let mag = ((i * i + q * q) as f32).sqrt() * 360.0;
+            maglut[i * 129 + q] = mag.round() as u16;
+        }
+    }
+    
+    let mut outbuf = MagnitudeBuffer::default();
+    for (j, chunk) in data.chunks_exact(2).enumerate() {
+        let i = (chunk[0] as i32) - 127;
+        let q = (chunk[1] as i32) - 127;
+
+        let i = if i < 0 { -i } else { i } as usize;
+        let q = if q < 0 { -q } else { q } as usize;
+
+
+        outbuf.push(maglut[i * 129 + q]);
+    }
+    outbuf
+}
+/* *
+#[must_use]
 pub fn to_mag(data: &[Complex<i16>]) -> MagnitudeBuffer {
     let mut outbuf = MagnitudeBuffer::default();
     for b in data {
@@ -56,3 +82,4 @@ pub fn to_mag(data: &[Complex<i16>]) -> MagnitudeBuffer {
     }
     outbuf
 }
+*/
